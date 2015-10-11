@@ -53,6 +53,8 @@ var server = http.createServer(function(req, res) {
   }
 });
 
-server.listen(8081);
-
 //addLocalMapping("http://example.com/bundle.js", __dirname+'/bundle.js');
+
+module.exports = function() {
+  server.listen(8081);
+};

@@ -23,24 +23,48 @@ var findLocalMapping = function(location) {
   var i;
   for (i=0; i < localMappings.length; i++) {
     if (localMappings[i].location === location) {
+      console.log('"'+location+'" is local mapped.');
       return localMappings[i];
     };
   }
   return false;
 };
 
+var rewriteUrls = [];
+
+var addRewriteUrl = function(location, regexp, newSubStr) {
+  rewriteUrls.push({location: location, regexp: regexp, newSubStr: newSubStr});
+};
+
+var rewriteUrl = function(location) {
+  var i;
+  var rule;
+  var rewritedUrl;
+  for (i=0; i < rewriteUrls.length; i++) {
+    if (rewriteUrls[i].location === location) {
+      rule = rewriteUrls[i];
+      rewritedUrl = location.replace(rule.regexp, rule.newSubStr);
+      console.log('"'+location+'" is rewrited to '+'"'+rewritedUrl+'"');
+      return rewritedUrl;
+    };
+  }
+  return location;
+};
+
 var server = http.createServer(function(req, res) {
   var parsedUrl = url.parse(req.url);
   var protocol = parsedUrl.protocol;
   var host = parsedUrl.host;
-  var rule = findLocalMapping(req.url);
+  var localMappingRule = findLocalMapping(req.url);
+
+  req.url = rewriteUrl(req.url);
 
   console.log(req.url);
 
-  if (rule !== false) {
-    var s = fs.createReadStream(rule.filePath, {encoding: 'utf-8'});
+  if (localMappingRule !== false) {
+    var s = fs.createReadStream(localMappingRule.filePath, {encoding: 'utf-8'});
     res.writeHead(200, {
-      'Content-Type': mime.lookup(rule.filePath)
+      'Content-Type': mime.lookup(localMappingRule.filePath)
     });
     s.on('data', function(data) {
       res.write(data);
@@ -54,6 +78,7 @@ var server = http.createServer(function(req, res) {
 });
 
 //addLocalMapping("http://example.com/bundle.js", __dirname+'/bundle.js');
+addRewriteUrl("http://localhost:8000/abcde.js", /abcde\.js/, 'xyz.js');
 
 module.exports = function() {
   server.listen(8081);

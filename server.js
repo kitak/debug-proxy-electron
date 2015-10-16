@@ -51,34 +51,57 @@ var rewriteUrl = function(location) {
   return location;
 };
 
+var breakPoints = [];
+var addBreakPoint = function(regexp) {
+  breakPoints.push(regexp);
+};
+
+var detectBreakPoint = function(location) {
+  var i;
+  for (i=0; i < breakPoints.length; i++) {
+    if (breakPoints[i].test(location)) {
+      return true;
+    };
+  }
+  return false;
+};
+
 var server = http.createServer(function(req, res) {
   var parsedUrl = url.parse(req.url);
   var protocol = parsedUrl.protocol;
   var host = parsedUrl.host;
   var localMappingRule = findLocalMapping(req.url);
 
-  req.url = rewriteUrl(req.url);
-
-  console.log(req.url);
-
-  if (localMappingRule !== false) {
-    var s = fs.createReadStream(localMappingRule.filePath, {encoding: 'utf-8'});
-    res.writeHead(200, {
-      'Content-Type': mime.lookup(localMappingRule.filePath)
-    });
-    s.on('data', function(data) {
-      res.write(data);
-    });
-    s.on('end', function() {
-      res.end();
-    });
+  if (detectBreakPoint(req.url)) {
+    // TODO: move to global variables
+    setTimeout(function () {
+      proxy.web(req, res, { target: parsedUrl.protocol+'//'+parsedUrl.host+'/' });
+    }, 3000);
   } else {
-    proxy.web(req, res, { target: parsedUrl.protocol+'//'+parsedUrl.host+'/' });
+    req.url = rewriteUrl(req.url);
+
+    console.log(req.url);
+
+    if (localMappingRule !== false) {
+      var s = fs.createReadStream(localMappingRule.filePath, {encoding: 'utf-8'});
+      res.writeHead(200, {
+        'Content-Type': mime.lookup(localMappingRule.filePath)
+      });
+      s.on('data', function(data) {
+        res.write(data);
+      });
+      s.on('end', function() {
+        res.end();
+      });
+    } else {
+      proxy.web(req, res, { target: parsedUrl.protocol+'//'+parsedUrl.host+'/' });
+    }
   }
 });
 
 //addLocalMapping("http://example.com/bundle.js", __dirname+'/bundle.js');
 addRewriteUrl("http://localhost:8000/abcde.js", /abcde\.js/, 'xyz.js');
+addBreakPoint(/localhost\:8000\/abcde\.js/);
 
 module.exports = function() {
   server.listen(8081);

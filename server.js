@@ -1,4 +1,5 @@
 var http = require('http');
+var https = require('https');
 var httpProxy = require('http-proxy');
 var url = require('url');
 var fs = require('fs');
@@ -99,10 +100,27 @@ var server = http.createServer(function(req, res) {
   }
 });
 
+var server2 = https.createServer({
+  key: fs.readFileSync('/Users/kitak/ssl_key_and_cerf/server.key'),
+  cert: fs.readFileSync('/Users/kitak/ssl_key_and_cerf/server.crt')
+}, function (req, res) {
+  var parsedUrl = url.parse(req.url);
+  console.log(req.url);
+
+  proxy.web(req, res, {
+    target: parsedUrl.protocol+'//'+parsedUrl.host+'/',
+    agent: https.globalAgent,
+    headers: {
+      host: parsedUrl.host
+    }
+  });
+});
+
 //addLocalMapping("http://example.com/bundle.js", __dirname+'/bundle.js');
 addRewriteUrl("http://localhost:8000/abcde.js", /abcde\.js/, 'xyz.js');
 addBreakPoint(/localhost\:8000\/abcde\.js/);
 
 module.exports = function() {
   server.listen(8081);
+  server2.listen(8443);
 };

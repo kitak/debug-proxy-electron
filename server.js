@@ -4,6 +4,7 @@ var httpProxy = require('http-proxy');
 var url = require('url');
 var fs = require('fs');
 var mime = require('mime');
+var net = require('net');
 
 var proxy = httpProxy.createProxyServer({});
 
@@ -100,7 +101,42 @@ var server = http.createServer(function(req, res) {
   }
 });
 
-var server2 = https.createServer({
+var server2 = http.createServer(function () {});
+
+server2.addListener('connect', function(request, socketRequest, bodyhead){
+  var url = request.url;
+  var httpVersion = request.httpVersion;
+  var parsedUrl = url.parse(request.url);
+  console.log('will connect to %s:%s', parsedUrl.host, parsedUrl.port);
+  // set up TCP connection
+  var proxySocket = new net.Socket();
+  proxySocket.connect(8444, 'localhost', function() {
+    proxySocket.write(bodyhead);
+    socketRequest.write("HTTP/" + httpVersion + " 200 Connection established\r\n\r\n");
+  });
+  proxySocket.on('data', function(chunk) {
+    socketRequest.write(chunk);
+  });
+  proxySocket.on('end', function() {
+    socketRequest.end();
+  });
+  socketRequest.on('data', function(chunk){
+    proxySocket.write(chunk);
+  });
+  socketRequest.on('end', function(){
+    proxySocket.end();
+  });
+  proxySocket.on('error', function(err){
+    socketRequest.write("HTTP/" + httpVersion + " 500 Connection error\r\n\r\n");
+    socketRequest.end();
+  });
+  socketRequest.on('error', function(err){
+    proxySocket.end();
+  });
+});
+
+// certificate dynamic?
+var server3 = https.createServer({
   key: fs.readFileSync('/Users/kitak/ssl_key_and_cerf/server.key'),
   cert: fs.readFileSync('/Users/kitak/ssl_key_and_cerf/server.crt')
 }, function (req, res) {
@@ -112,7 +148,8 @@ var server2 = https.createServer({
     agent: https.globalAgent,
     headers: {
       host: parsedUrl.host
-    }
+    },
+    secure: true
   });
 });
 
@@ -123,4 +160,5 @@ addBreakPoint(/localhost\:8000\/abcde\.js/);
 module.exports = function() {
   server.listen(8081);
   server2.listen(8443);
+  server3.listen(8444);
 };

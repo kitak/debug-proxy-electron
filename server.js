@@ -5,6 +5,7 @@ var url = require('url');
 var fs = require('fs');
 var mime = require('mime');
 var net = require('net');
+var crypto = require('crypto');
 
 var proxy = httpProxy.createProxyServer({});
 
@@ -104,13 +105,20 @@ var server = http.createServer(function(req, res) {
 var server2 = http.createServer(function () {});
 
 server2.addListener('connect', function(request, socketRequest, bodyhead){
-  var url = request.url;
   var httpVersion = request.httpVersion;
-  var parsedUrl = url.parse(request.url);
-  console.log('will connect to %s:%s', parsedUrl.host, parsedUrl.port);
+  var hostAndPort = request.url.split(':');
+  var host = hostAndPort[0];
+  var port = hostAndPort[1];
+  console.log('will connect to %s:%s', host, port);
   // set up TCP connection
   var proxySocket = new net.Socket();
-  proxySocket.connect(8444, 'localhost', function() {
+
+  if ((host === 'twitter.com' || host === 'nodejs.org') && port == 443) {
+    host = 'localhost';
+    port = 8444;
+  }
+
+  proxySocket.connect(port, host, function() {
     proxySocket.write(bodyhead);
     socketRequest.write("HTTP/" + httpVersion + " 200 Connection established\r\n\r\n");
   });
@@ -135,19 +143,34 @@ server2.addListener('connect', function(request, socketRequest, bodyhead){
   });
 });
 
-// certificate dynamic?
+var getSecureContext = function(domain) {
+  domain = domain.replace('.', '');
+  console.log(domain);
+  return crypto.createCredentials({
+    key: fs.readFileSync('/Users/kitak/.ghq/github.com/kitak/debug-proxy-electron/tmp/'+domain+'.key'),
+    cert: fs.readFileSync('/Users/kitak/.ghq/github.com/kitak/debug-proxy-electron/tmp/'+domain+'.crt'),
+    ca: [fs.readFileSync('/Users/kitak/.ghq/github.com/kitak/debug-proxy-electron/tmp/rootCA.pem')]
+  }).context;
+};
+
+var certs = {
+  "twitter.com": getSecureContext("twitter.com"),
+  "nodejs.org": getSecureContext("nodejs.org")
+};
+
 var server3 = https.createServer({
-  key: fs.readFileSync('/Users/kitak/ssl_key_and_cerf/server.key'),
-  cert: fs.readFileSync('/Users/kitak/ssl_key_and_cerf/server.crt')
+  SNICallback: function(domain, callback) {
+    return callback(null, certs[domain]);
+  }
 }, function (req, res) {
-  var parsedUrl = url.parse(req.url);
-  console.log(req.url);
+  var servername = req.socket.servername;
+  console.log("in local https server: "+servername);
 
   proxy.web(req, res, {
-    target: parsedUrl.protocol+'//'+parsedUrl.host+'/',
+    target: 'https://'+servername+'/',
     agent: https.globalAgent,
     headers: {
-      host: parsedUrl.host
+      host: servername
     },
     secure: true
   });

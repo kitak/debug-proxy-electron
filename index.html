@@ -6,10 +6,23 @@
   <script>
     var remote = require('remote');
     var server = remote.require('./server');
-    server();
+    server.listen();
+
+    document.addEventListener('DOMContentLoaded', function() {
+      var sslDomain = document.getElementById('ssl-domain');
+      var addSslDomain = document.getElementById('add-ssl-domain');
+      addSslDomain.addEventListener('click', function() {
+        if (sslDomain.value !== "") {
+          server.addSslProxyTarget(sslDomain.value)
+        }
+      });
+    });
   </script>
 </head>
 <body>
-  <p>hello</p>
+  <div>
+    <input id="ssl-domain" type="text">
+    <input id="add-ssl-domain" type="submit" value="設定">
+  </div>
 </body>
 </html>

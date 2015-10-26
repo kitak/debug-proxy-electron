@@ -167,19 +167,38 @@ var server3 = https.createServer({
   }
 }, function (req, res) {
   var servername = req.socket.servername;
+  var host = servername;
+  var url = 'https://'+servername+req.url;
   console.log("in local https server: "+servername);
 
-  proxy.web(req, res, {
-    target: 'https://'+servername+'/',
-    agent: https.globalAgent,
-    headers: {
-      host: servername
-    },
-    secure: true
-  });
+  var localMappingRule = findLocalMapping(url);
+
+  if (localMappingRule !== false) {
+    console.log("apply local mapping");
+    console.log(localMappingRule);
+    var s = fs.createReadStream(localMappingRule.filePath, {encoding: 'utf-8'});
+    res.writeHead(200, {
+      'Content-Type': mime.lookup(localMappingRule.filePath)
+    });
+    s.on('data', function(data) {
+      res.write(data);
+    });
+    s.on('end', function() {
+      res.end();
+    });
+  } else {
+    proxy.web(req, res, {
+      target: 'https://'+servername+'/',
+      agent: https.globalAgent,
+      headers: {
+        host: servername
+      },
+      secure: true
+    });
+  }
 });
 
-//addLocalMapping("http://example.com/bundle.js", __dirname+'/bundle.js');
+//addLocalMapping("https://twitter.com/", __dirname+'/bundle.js');
 addRewriteUrl("http://localhost:8000/abcde.js", /abcde\.js/, 'xyz.js');
 addBreakPoint(/localhost\:8000\/abcde\.js/);
 

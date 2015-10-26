@@ -171,6 +171,10 @@ var server3 = https.createServer({
   var url = 'https://'+servername+req.url;
   console.log("in local https server: "+servername);
 
+  req.url = rewriteUrl(url);
+
+  console.log(req.url);
+
   var localMappingRule = findLocalMapping(url);
 
   if (localMappingRule !== false) {
@@ -200,6 +204,7 @@ var server3 = https.createServer({
 
 //addLocalMapping("https://twitter.com/", __dirname+'/bundle.js');
 addRewriteUrl("http://localhost:8000/abcde.js", /abcde\.js/, 'xyz.js');
+//addRewriteUrl("https://twitter.com/kitak", /kitak/, 'kentaro');
 addBreakPoint(/localhost\:8000\/abcde\.js/);
 
 module.exports = {

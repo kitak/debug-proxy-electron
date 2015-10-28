@@ -161,6 +161,23 @@ server2.addListener('connect', function(request, socketRequest, bodyhead){
   });
 });
 
+proxy.on('proxyRes', function (proxyRes, req, res) {
+  var targetHost = 'example.com';
+  var targetName = '';
+  var targetValue = '';
+  if ((new RegExp(targetHost)).test(req.url)) {
+    var originalSetHeader = res.setHeader.bind(res);
+    res.setHeader = function (name, value) {
+      console.log(name + " is " + value);
+      if (name === targetName) {
+        originalSetHeader(name, targetValue);
+      } else {
+        originalSetHeader(name, value);
+      }
+    };
+  }
+});
+
 var server3 = https.createServer({
   SNICallback: function(domain, callback) {
     return callback(null, certs[domain]);

@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title></title>
+  <link rel="stylesheet" href="./node_modules/photon/dist/css/photon.min.css">
   <script>
     var remote = require('remote');
     var server = remote.require('./server');
@@ -20,9 +21,34 @@
   </script>
 </head>
 <body>
-  <div>
-    <input id="ssl-domain" type="text">
-    <input id="add-ssl-domain" type="submit" value="設定">
+  <div class="window">
+    <div class="window-content">
+      <div>
+        <input id="ssl-domain" type="text">
+        <input id="add-ssl-domain" type="submit" value="設定">
+      </div>
+      <table class="table-striped">
+        <thead>
+          <tr>
+            <th>URL</th>
+            <th>Method</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>/alpha</td>
+            <td>GET</td>
+            <td>200</td>
+          </tr>
+          <tr>
+            <td>/beta</td>
+            <td>GET</td>
+            <td>200</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </body>
 </html>

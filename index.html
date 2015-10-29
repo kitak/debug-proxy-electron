@@ -21,33 +21,55 @@
   </script>
 </head>
 <body>
+  <div>
+    <input class="form-control" id="ssl-domain" type="text">
+    <button class="btn btn-default" id="add-ssl-domain">設定</button>
+  </div>
   <div class="window">
-    <div class="window-content">
-      <div>
-        <input id="ssl-domain" type="text">
-        <input id="add-ssl-domain" type="submit" value="設定">
+    <header class="toolbar tookbar-header">
+      <div class="toolbar-actions">
+        <div class="btn-group">
+          <button class="btn btn-default">
+            <span class="icon icon-list"></span>
+          </button>
+          <button class="btn btn-default">
+            <span class="icon icon-folder"></span>
+          </button>
+          <button class="btn btn-default">
+            <span class="icon icon-cog"></span>
+          </button>
+        </div>
       </div>
-      <table class="table-striped">
-        <thead>
-          <tr>
-            <th>URL</th>
-            <th>Method</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>/alpha</td>
-            <td>GET</td>
-            <td>200</td>
-          </tr>
-          <tr>
-            <td>/beta</td>
-            <td>GET</td>
-            <td>200</td>
-          </tr>
-        </tbody>
-      </table>
+    </header>
+    <div class="window-content">
+      <div class="pane-group">
+        <div class="pane">
+          <table class="table-striped">
+            <thead>
+              <tr>
+                <th>URL</th>
+                <th>Method</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>/alpha</td>
+                <td>GET</td>
+                <td>200</td>
+              </tr>
+              <tr>
+                <td>/beta</td>
+                <td>GET</td>
+                <td>200</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pane" style="display: none;">
+          test
+        </div>
+      </div>
     </div>
   </div>
 </body>
